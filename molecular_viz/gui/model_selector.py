@@ -11,21 +11,27 @@ class ModelSelector:
             name: model_class() for name, model_class in models.items()
         }
 
-        # Model selection dropdown
+        # Model selection dropdown (simplified - remove categories)
         ttk.Label(self.frame, text="Interaction Model:").pack(side="left", padx=5)
-        self.model_var = tk.StringVar(value=list(models.keys())[0])
+        self.model_var = tk.StringVar(value="Lennard-Jones")
+        
+        # Organize models into categories but keep dropdown simple
+        model_list = list(models.keys())
+        
         self.model_dropdown = ttk.Combobox(
             self.frame, 
             textvariable=self.model_var,
-            values=list(models.keys()),
+            values=model_list,  # Just use the plain list of models
             state="readonly", 
             width=30
         )
         self.model_dropdown.pack(side="left", padx=5)
         
+        # Store callback
+        self.on_model_change = on_model_change
+        
         # Bind the callback
-        self.model_dropdown.bind('<<ComboboxSelected>>', 
-                               lambda e: on_model_change(self.model_var.get()))
+        self.model_dropdown.bind('<<ComboboxSelected>>', self.on_selection_change)
 
         # Info button with hover tooltip
         self.info_label = ttk.Label(self.frame, text="ℹ")
@@ -33,6 +39,11 @@ class ModelSelector:
         
         # Create tooltip for model information
         self.create_tooltip()
+
+    def on_selection_change(self, event):
+        model_name = self.model_var.get()
+#         print(f"ModelSelector: Selected model: {model_name}")  # Debug print
+        self.on_model_change(model_name)
 
     def create_tooltip(self):
         tooltip = tk.Toplevel(self.frame)
@@ -44,7 +55,7 @@ class ModelSelector:
         text.pack()
 
         def show_tooltip(event):
-            model_name = self.model_var.get()
+            model_name = self.get_current_model()
             model = self.model_instances[model_name]
             text.delete(1.0, tk.END)
             text.insert(tk.END, f"Model: {model_name}\n\n")

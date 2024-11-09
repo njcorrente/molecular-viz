@@ -2,7 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 import numpy as np
 
-from models.potential_models import LennardJones, HardSphere, SquareWell, Sutherland
+from models.potential_models import (
+    LennardJones, HardSphere, SquareWell, Sutherland,
+    MorsePotential, BuckinghamPotential, YukawaPotential, MiePotential
+)
 from gui.molecule_canvas import MoleculeCanvas
 from gui.plot_frame import PlotFrame
 from gui.parameter_frame import ParameterFrame
@@ -21,7 +24,11 @@ class PotentialVisualizer(tk.Tk):
             "Lennard-Jones": LennardJones,
             "Hard Sphere": HardSphere,
             "Square Well": SquareWell,
-            "Sutherland": Sutherland
+            "Sutherland": Sutherland,
+            "Morse": MorsePotential,
+            "Buckingham": BuckinghamPotential,
+            "Yukawa": YukawaPotential,
+            "Mie": MiePotential
         }
 
         # Initialize current model
@@ -38,7 +45,7 @@ class PotentialVisualizer(tk.Tk):
         # Create parameter frame
         self.param_frame = ParameterFrame(self, self.update_parameters)
 
-        # Create model-specific parameters frame (now just shows description)
+        # Create model-specific parameters frame
         self.model_specific_params = ModelSpecificParams(self, self.update_parameters)
 
         # Create molecule visualization
@@ -64,34 +71,56 @@ class PotentialVisualizer(tk.Tk):
         self.model_specific_params.update_for_model("Lennard-Jones", self.current_model.description)
 
     def on_model_change(self, model_name):
+#         print(f"Model changed to: {model_name}")  # Debug print
+        
         # Get model instance for description
         model_instance = self.models[model_name]()
         
-        # Update model description
+        # Update model description and specific parameters
         self.model_specific_params.update_for_model(model_name, model_instance.description)
         
-        # Update current model
+        # Update current model with parameters
         self.update_parameters()
 
     def update_parameters(self):
-        # Get current model name
+        # Get current model name (without category indentation)
         model_name = self.model_selector.get_current_model()
+#         print(f"Updating parameters for: {model_name}")  # Debug print
         
         # Get basic parameters
-        params = self.param_frame.get_parameters()
+        base_params = self.param_frame.get_parameters()
+        specific_params = self.model_specific_params.get_parameters()
+#         print(f"Base parameters: {base_params}")  # Debug print
+#         print(f"Specific parameters: {specific_params}")  # Debug print
         
         # Create new model instance
         model_class = self.models[model_name]
         self.current_model = model_class(
-            epsilon_over_kB=params['epsilon_over_kB'],
-            sigma=params['sigma']
+            epsilon_over_kB=base_params['epsilon_over_kB'],
+            sigma=base_params['sigma']
         )
+        
+        # Set model-specific parameters
+        if model_name == "Morse" and 'morse_a' in specific_params:
+            self.current_model.a = specific_params['morse_a']
+        elif model_name == "Buckingham":
+            if 'buck_A' in specific_params:
+                self.current_model.A = specific_params['buck_A']
+            if 'buck_B' in specific_params:
+                self.current_model.B = specific_params['buck_B']
+        elif model_name == "Yukawa" and 'yukawa_kappa' in specific_params:
+            self.current_model.kappa = specific_params['yukawa_kappa']
+        elif model_name == "Mie":
+            if 'mie_n' in specific_params:
+                self.current_model.n = specific_params['mie_n']
+            if 'mie_m' in specific_params:
+                self.current_model.m = specific_params['mie_m']
         
         # Update visualization
         self.update_visualization()
 
     def on_slider_change(self, value):
-        """Handle slider value changes with detents at r = sigma and potential minimum (LJ only)"""
+        """Handle slider value changes with detents at r = sigma and potential minimum"""
         try:
             value = float(value)
             sigma = self.current_model.sigma
@@ -101,9 +130,14 @@ class PotentialVisualizer(tk.Tk):
             if abs(value - sigma) < detent_width:
                 self.current_distance = sigma
                 self.distance_var.set(sigma)
-            # If Lennard-Jones, add detent at potential minimum
-            elif isinstance(self.current_model, LennardJones):
-                r_min = 2.0**(1.0/6.0) * sigma  # Position of potential minimum for LJ
+            # Handle potential minima for different models
+            elif isinstance(self.current_model, (LennardJones, MiePotential)):
+                if isinstance(self.current_model, LennardJones):
+                    r_min = 2.0**(1.0/6.0) * sigma
+                else:  # Mie potential
+                    r_min = sigma * ((self.current_model.n / self.current_model.m) ** 
+                                   (1.0/(self.current_model.n - self.current_model.m)))
+                
                 if abs(value - r_min) < detent_width:
                     self.current_distance = r_min
                     self.distance_var.set(r_min)

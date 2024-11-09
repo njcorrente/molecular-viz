@@ -30,7 +30,11 @@ class PlotFrame:
             'Lennard-Jones': '#2E86C1',
             'Hard Sphere': '#28B463',
             'Square Well': '#E67E22',
-            'Sutherland': '#8E44AD'
+            'Sutherland': '#8E44AD',
+            'Morse': '#D35400',
+            'Buckingham': '#2980B9',
+            'Yukawa': '#8E44AD',
+            'Mie': '#16A085'
         }
 
     def configure_plot_style(self):
@@ -58,64 +62,19 @@ class PlotFrame:
         model_color = self.plot_colors[model.name]
         y_max = model.epsilon_over_kB * 10
         y_min = -2 * model.epsilon_over_kB
+
         # Add horizontal line at V = 0
         self.ax.axhline(y=0, color='k', linestyle='-', linewidth=0.5)
 
         # Plot the potential based on model type
         if model.name == 'Square Well':
-            well_position = model.sigma * model.well_width
-            well_depth = -model.epsilon_over_kB * model.well_depth
-            
-            # Add high-value line segment for r < sigma
-            r_repulsive = r[r < model.sigma]
-            if len(r_repulsive) > 0:
-                V_repulsive = np.full_like(r_repulsive, y_max)
-                self.ax.plot(r_repulsive, V_repulsive, '-', 
-                           color=model_color, linewidth=2, alpha=0.5)
-                
-                # Add vertical connection line from well depth to y_max at r = sigma
-                self.ax.plot([model.sigma, model.sigma], [well_depth, y_max], '-',
-                           color=model_color, linewidth=2, alpha=0.8)
-            
-            # Plot well region
-            r_well = r[(r >= model.sigma) & (r < well_position)]
-            V_well = np.full_like(r_well, well_depth)
-            self.ax.plot(r_well, V_well, '-', color=model_color, 
-                        linewidth=2.5, alpha=0.8)
-            
-            # Plot outer region
-            r_outer = r[r >= well_position]
-            V_outer = np.zeros_like(r_outer)
-            self.ax.plot(r_outer, V_outer, '-', color=model_color, 
-                        linewidth=2.5, alpha=0.8)
-            
-            # Add vertical connection at well edge
-            self.ax.plot([well_position, well_position], [well_depth, 0], '-',
-                        color=model_color, linewidth=2.5, alpha=0.8)
-
+            self.plot_square_well(model, r, V, y_max, model_color)
         elif model.name in ['Hard Sphere', 'Sutherland']:
-            # Plot the main potential curve
+            self.plot_hard_sphere_type(model, r, V, y_max, model_color)
+        else:  # Continuous potentials
             valid_mask = ~np.isinf(V)
             self.ax.plot(r[valid_mask], V[valid_mask], '-', 
                         color=model_color, linewidth=2.5, alpha=0.8)
-
-            # Add high-value line segment for r < sigma
-            r_repulsive = r[r < model.sigma]
-            if len(r_repulsive) > 0:
-                V_repulsive = np.full_like(r_repulsive, y_max)
-                self.ax.plot(r_repulsive, V_repulsive, '-', 
-                           color=model_color, linewidth=2, alpha=0.5)
-
-            # Find the value of the potential just after sigma
-            r_after_sigma = r[r >= model.sigma][0]
-            V_after_sigma = V[r >= model.sigma][0]
-            
-            # Add vertical connection line
-            self.ax.plot([model.sigma, model.sigma], [V_after_sigma, y_max], '-',
-                        color=model_color, linewidth=2, alpha=0.8)
-
-        else:  # Lennard-Jones
-            self.ax.plot(r, V, '-', color=model_color, linewidth=2.5, alpha=0.8)
 
         # Plot current point if not in infinite region
         if not np.isinf(current_V):
@@ -129,6 +88,63 @@ class PlotFrame:
         self.ax.set_title(f'{model.name} Potential', fontsize=14, fontweight='bold', pad=15)
 
         # Equation display
+        self.display_equation(equation)
+
+        # Set axis limits based on model type
+        self.set_axis_limits(model)
+
+        # Update canvas
+        self.canvas.draw()
+
+    def plot_square_well(self, model, r, V, y_max, color):
+        well_position = model.sigma * model.well_width
+        well_depth = -model.epsilon_over_kB * model.well_depth
+        
+        # Add high-value line segment for r < sigma
+        r_repulsive = r[r < model.sigma]
+        if len(r_repulsive) > 0:
+            V_repulsive = np.full_like(r_repulsive, y_max)
+            self.ax.plot(r_repulsive, V_repulsive, '-', 
+                       color=color, linewidth=2, alpha=0.5)
+            
+            # Add vertical connection line
+            self.ax.plot([model.sigma, model.sigma], [well_depth, y_max], '-',
+                       color=color, linewidth=2, alpha=0.8)
+        
+        # Plot well region and outer region
+        r_well = r[(r >= model.sigma) & (r < well_position)]
+        V_well = np.full_like(r_well, well_depth)
+        self.ax.plot(r_well, V_well, '-', color=color, linewidth=2.5, alpha=0.8)
+        
+        r_outer = r[r >= well_position]
+        V_outer = np.zeros_like(r_outer)
+        self.ax.plot(r_outer, V_outer, '-', color=color, linewidth=2.5, alpha=0.8)
+        
+        # Add vertical connection at well edge
+        self.ax.plot([well_position, well_position], [well_depth, 0], '-',
+                    color=color, linewidth=2.5, alpha=0.8)
+
+    def plot_hard_sphere_type(self, model, r, V, y_max, color):
+        valid_mask = ~np.isinf(V)
+        self.ax.plot(r[valid_mask], V[valid_mask], '-', 
+                    color=color, linewidth=2.5, alpha=0.8)
+
+        # Add high-value line segment for r < sigma
+        r_repulsive = r[r < model.sigma]
+        if len(r_repulsive) > 0:
+            V_repulsive = np.full_like(r_repulsive, y_max)
+            self.ax.plot(r_repulsive, V_repulsive, '-', 
+                       color=color, linewidth=2, alpha=0.5)
+
+        # Find the value of the potential just after sigma
+        r_after_sigma = r[r >= model.sigma][0]
+        V_after_sigma = V[r >= model.sigma][0]
+        
+        # Add vertical connection line
+        self.ax.plot([model.sigma, model.sigma], [V_after_sigma, y_max], '-',
+                    color=color, linewidth=2, alpha=0.8)
+
+    def display_equation(self, equation):
         bbox_props = dict(boxstyle="round,pad=0.5", fc="#f8f9fa", ec="gray", 
                          alpha=0.9, linewidth=1.5)
         
@@ -144,10 +160,12 @@ class PlotFrame:
                     verticalalignment='top',
                     math_fontfamily='dejavuserif')
 
-        # Set axis limits
+    def set_axis_limits(self, model):
         y_min = -model.epsilon_over_kB * 1.5
-        self.ax.set_ylim([y_min, 1000])
-        self.ax.set_xlim(0.5*model.sigma, 10.0)
-
-        # Update canvas
-        self.canvas.draw()
+        if model.name in ['Yukawa', 'Morse']:
+            y_max = model.epsilon_over_kB * 5
+        else:
+            y_max = model.epsilon_over_kB * 10
+        
+        self.ax.set_ylim([y_min, y_max])
+        self.ax.set_xlim(0.5 * model.sigma, 10.0)
