@@ -5,7 +5,7 @@ An interactive visualization of molecular potentials including Lennard-Jones and
 ## Installation
 
 1. Clone this repository:
-   git clone https://github.com/njcorrente/molecular-viz
+   git clone https://github.com/njcorrente/molecular-viz;
    cd molecular-viz
 
 2. Install requirements:
