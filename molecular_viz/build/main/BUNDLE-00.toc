@@ -1,3 +1,0 @@
-([('main',
-   '/Users/njcorrente/Documents/School/Rutgers/3DLab/LJ_App/molecular_viz/dist/main',
-   'EXECUTABLE')],)
