@@ -11,6 +11,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            runtime_hook: linux_runtime_hook.py
+          - os: windows-latest
+            runtime_hook: windows_rintime_hook.py
+          - os: macos-latest
+            runtime_hook: macos_runtime_hook.py
 
     steps:
     - uses: actions/checkout@v3
@@ -26,19 +33,53 @@ jobs:
         miniconda-version: "latest"
         activate-environment: build-env
         python-version: '3.9'
+        
+    - name: Install Linux dependencies
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash -l {0}
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-tk
 
     - name: Install dependencies
       shell: bash -l {0}
       run: |
-        conda install -c conda-forge pyinstaller
-        pip install -r requirements.txt
+        conda install -c conda-forge numpy matplotlib pyinstaller
+        python -m pip install -r requirements.txt
 
     - name: Build executable
       shell: bash -l {0}
-      run: pyinstaller --onefile calculator.py
+      run: |
+        pyinstaller --onefile \
+          --add-data "pyPairViz:pyPairViz" \
+          --hidden-import tkinter \
+          --hidden-import numpy \
+          --hidden-import matplotlib \
+          --runtime-hook ${{ matrix.runtime_hook }} \
+          pyPairViz/main.py
 
-    - name: Upload artifacts
+    - name: Rename executable
+      shell: bash -l {0}
+      run: |
+        cd dist
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          mv main.exe pyPairViz-windows.exe
+        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+          mv main pyPairViz-macos
+        else
+          mv main pyPairViz-linux
+        fi
+
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
-        name: calculator-${{ matrix.os }}
+        name: pyPairViz-${{ matrix.os }}
         path: dist/*
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: dist/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
