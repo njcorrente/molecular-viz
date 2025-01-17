@@ -1,4 +1,4 @@
-# Molecular Potential Viewer
+# pyPairViz
 
 An interactive visualization tool for exploring molecular interaction potentials. This application provides a graphical interface to visualize and understand different molecular potential models commonly used in physics and chemistry.
 
