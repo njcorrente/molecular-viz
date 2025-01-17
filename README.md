@@ -3,7 +3,7 @@
 
 An interactive visualization tool for exploring molecular interaction potentials. This application provides a graphical interface to visualize and understand different molecular potential models commonly used in physics and chemistry.
 
-! [Molecular Potential Viewer Screenshot](images/app.png)
+![Molecular Potential Viewer Screenshot](images/app.png)
 
 ## Features
 
