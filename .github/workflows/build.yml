@@ -69,8 +69,8 @@ jobs:
         application = defines.get("app", "dist/PyPairViz.app")
         appname = os.path.basename(application)
 
-        format = defines.get("format", "UDBZ")
-        size = defines.get("size", "100M")
+        format = defines.get("format", "UDZO")  # Changed from UDBZ to UDZO for better compatibility
+        size = defines.get("size", "500M")      # Increased size
         files = [application]
         symlinks = {"Applications": "/Applications"}
 
@@ -95,6 +95,10 @@ jobs:
       if: matrix.os == 'macos-latest'
       shell: bash -l {0}
       run: |
+        # Clean up before building
+        df -h
+        rm -rf dist build
+        
         pyinstaller --clean \
           --name "PyPairViz" \
           --windowed \
@@ -105,7 +109,20 @@ jobs:
           --runtime-hook ${{ matrix.runtime_hook }} \
           --osx-bundle-identifier "com.pypairviz.app" \
           pyPairViz/main.py
-        dmgbuild -s dmg_settings.py "PyPairViz" dist/PyPairViz.dmg
+
+        # Clean up before DMG creation
+        df -h
+        rm -rf build
+
+        # Create DMG with error handling
+        if ! dmgbuild -s dmg_settings.py "PyPairViz" dist/PyPairViz.dmg; then
+          echo "First DMG creation attempt failed, trying alternative method..."
+          hdiutil create -volname "PyPairViz" -srcfolder dist/PyPairViz.app -ov -format UDZO dist/PyPairViz.dmg
+        fi
+
+        # Verify DMG was created
+        ls -la dist/
+        df -h
 
     - name: Rename executable (Linux/Windows)
       if: matrix.os != 'macos-latest'
