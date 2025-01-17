@@ -46,7 +46,7 @@ pip install -r requirements.txt
 
 3. Run the application:
 ```bash
-python molecular_viz/main.py
+python pyPairViz/main.py
 ```
 ## Requirements
 
