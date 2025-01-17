@@ -1,12 +1,15 @@
+# PyInstaller
+build/
+dist/
+*.spec
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
 .Python
-env/
-build/
 develop-eggs/
-dist/
 downloads/
 eggs/
 .eggs/
@@ -15,14 +18,12 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Virtual Environment
-venv/
-ENV/
-
 # IDE
 .idea/
 .vscode/
+*.swp
