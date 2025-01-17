@@ -1,4 +1,3 @@
-```markdown
 # Molecular Potential Viewer
 
 An interactive visualization tool for exploring molecular interaction potentials. This application provides a graphical interface to visualize and understand different molecular potential models commonly used in physics and chemistry.
@@ -34,7 +33,6 @@ An interactive visualization tool for exploring molecular interaction potentials
   - Real-time plot updates
 
 ## Installation
-```
 1. Clone this repository:
 ```bash
 git clone https://github.com/njcorrente/molecular-viz
@@ -50,8 +48,6 @@ pip install -r requirements.txt
 ```bash
 python molecular_viz/main.py
 ```
-
-```markdown
 ## Requirements
 
 - Python 3.7+
@@ -141,4 +137,3 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ### Equation of State Development
 - N. F. Carnahan and K. E. Starling, "Equation of State for Nonattracting Rigid Spheres," J. Chem. Phys. 51, 635 (1969)
 - https://doi.org/10.1063/1.1672048
-```
