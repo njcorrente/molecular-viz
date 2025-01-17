@@ -34,7 +34,7 @@ An interactive visualization tool for exploring molecular interaction potentials
   - Real-time plot updates
 
 ## Installation
-
+```
 1. Clone this repository:
 ```bash
 git clone https://github.com/njcorrente/molecular-viz
@@ -51,6 +51,7 @@ pip install -r requirements.txt
 python molecular_viz/main.py
 ```
 
+```markdown
 ## Requirements
 
 - Python 3.7+
