@@ -2,6 +2,8 @@
 
 An interactive visualization tool for exploring molecular interaction potentials. This application provides a graphical interface to visualize and understand different molecular potential models commonly used in physics and chemistry.
 
+A simplified web application can be found [here](https://pypairviz.streamlit.app/).
+
 ![Molecular Potential Viewer Screenshot](images/app.png)
 
 ## Features
